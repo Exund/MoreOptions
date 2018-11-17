@@ -1,0 +1,9 @@
+{
+  "Id": "exund.moreoptions",
+  "DisplayName": "More options",
+  "Author": "Exund",
+  "Version": "1.0.0",
+  "Enable": true,
+  "AssemblyName": "Exund.MoreOptions.dll",
+  "EntryMethod": "Exund.MoreOptions.MoreOptionsMod.Load"
+}
