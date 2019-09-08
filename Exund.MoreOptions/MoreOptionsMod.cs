@@ -6,6 +6,7 @@ using System.Reflection;
 using Harmony;
 using UnityEngine;
 using ModHelper.Config;
+using Nuterra.NativeOptions;
 
 namespace Exund.MoreOptions
 {
@@ -23,16 +24,41 @@ namespace Exund.MoreOptions
 
         public static ModConfig config;
 
-        public static void Load()
+		private static OptionToggle doProcessFire;
+		private static OptionToggle displayMuzzleFlashes;
+		private static OptionToggle displayBulletsCasing;
+		private static OptionToggle displaySmokeTrails;
+		private static OptionToggle displayHoverEffects;
+		private static OptionToggle displayRemoteChargersEffects;
+		private static OptionToggle displayHolderBeams;
+		private static OptionToggle displayThrustersEffects;
+		private static OptionToggle displayMissileSmoke;
+		private static OptionToggle displayProjectileExplosions;
+		private static OptionToggle displayBlockExplosions;
+		private static OptionToggle displayAntennaGlow;
+
+		private static bool doProcessFireBool;
+		private static bool displayMuzzleFlashesBool;
+		private static bool displayBulletsCasingBool;
+		private static bool displaySmokeTrailsBool;
+		private static bool displayHoverEffectsBool;
+		private static bool displayRemoteChargersEffectsBool;
+		private static bool displayHolderBeamsBool;
+		private static bool displayThrustersEffectsBool;
+		private static bool displayMissileSmokeBool;
+		private static bool displayProjectileExplosionsBool;
+		private static bool displayBlockExplosionsBool;
+		private static bool displayAntennaGlowBool;
+		
+		public static void Load()
         {
             config = new ModConfig();
-            foreach (FieldInfo f in typeof(OptionsWindow).GetFields(BindingFlags.Static | BindingFlags.Public))
+            foreach (FieldInfo f in typeof(MoreOptionsMod).GetFields(BindingFlags.Static | BindingFlags.NonPublic).Where(f => f.Name.EndsWith("Bool")))
             {
-                config.BindConfig<OptionsWindow>(null, f.Name);
+				config.BindConfig(null, f);
             }
 
-
-            EnableJetEffects = typeof(HoverJet).GetMethod("EnableJetEffects", BindingFlags.Instance | BindingFlags.NonPublic);
+			EnableJetEffects = typeof(HoverJet).GetMethod("EnableJetEffects", BindingFlags.Instance | BindingFlags.NonPublic);
             line = typeof(SmokeTrail).GetField("line", BindingFlags.Instance | BindingFlags.NonPublic);
             recoiling = typeof(CannonBarrel).GetField("recoiling", BindingFlags.Instance | BindingFlags.NonPublic);
             recoilAnim = typeof(CannonBarrel).GetField("recoilAnim", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -45,11 +71,70 @@ namespace Exund.MoreOptions
             var harmony = HarmonyInstance.Create("exund.prodcedural.blocks");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            var _holder = new GameObject();
-            _holder.AddComponent<OptionsWindow>();
-            GameObject.DontDestroyOnLoad(_holder);
 
-            
+			doProcessFire = new OptionToggle("Process Fire", "More Options", doProcessFireBool);
+			displayMuzzleFlashes = new OptionToggle("Muzzle Flashes", "More Options", displayMuzzleFlashesBool);
+			displayBulletsCasing = new OptionToggle("Bullets Casing", "More Options", displayBulletsCasingBool);
+			displaySmokeTrails = new OptionToggle("Smoke Trails", "More Options", displaySmokeTrailsBool);
+			displayHoverEffects = new OptionToggle("Hover Effects", "More Options", displayHoverEffectsBool);
+			displayRemoteChargersEffects = new OptionToggle("Remote Chargers Effects", "More Options", displayRemoteChargersEffectsBool);
+			displayHolderBeams = new OptionToggle("Holder Beams", "More Options", displayHolderBeamsBool);
+			displayThrustersEffects = new OptionToggle("Thrusters Effects", "More Options", displayThrustersEffectsBool);
+			displayMissileSmoke = new OptionToggle("Missile Smoke", "More Options", displayMissileSmokeBool);
+			displayProjectileExplosions = new OptionToggle("Projectile Explosions", "More Options", displayProjectileExplosionsBool);
+			displayBlockExplosions = new OptionToggle("Block Explosions", "More Options", displayBlockExplosionsBool);
+			displayAntennaGlow = new OptionToggle("Antenna Glow", "More Options", displayAntennaGlowBool);
+
+
+		   	doProcessFire.onValueSaved.AddListener(() =>
+			{
+				doProcessFireBool = doProcessFire.SavedValue;
+			});
+			displayMuzzleFlashes.onValueSaved.AddListener(() =>
+			{
+				displayMuzzleFlashesBool = displayMuzzleFlashes.SavedValue;
+			});
+			displayBulletsCasing.onValueSaved.AddListener(() =>
+			{
+				displayBulletsCasingBool = displayBulletsCasing.SavedValue;
+			});
+			displaySmokeTrails.onValueSaved.AddListener(() =>
+			{
+				displaySmokeTrailsBool = displaySmokeTrails.SavedValue;
+			});
+			displayHoverEffects.onValueSaved.AddListener(() =>
+			{
+				displayHoverEffectsBool = displayHoverEffects.SavedValue;
+			});
+			displayRemoteChargersEffects.onValueSaved.AddListener(() =>
+			{
+				displayRemoteChargersEffectsBool = displayRemoteChargersEffects.SavedValue;
+			});
+			displayHolderBeams.onValueSaved.AddListener(() =>
+			{
+				displayHolderBeamsBool = displayHolderBeams.SavedValue;
+			});
+			displayThrustersEffects.onValueSaved.AddListener(() =>
+			{
+				displayThrustersEffectsBool = displayThrustersEffects.SavedValue;
+			});
+			displayMissileSmoke.onValueSaved.AddListener(() =>
+			{
+				displayMissileSmokeBool = displayMissileSmoke.SavedValue;
+			});
+			displayProjectileExplosions.onValueSaved.AddListener(() =>
+			{
+				displayProjectileExplosionsBool = displayProjectileExplosions.SavedValue;
+			});
+			displayBlockExplosions.onValueSaved.AddListener(() =>
+			{
+				displayBlockExplosionsBool = displayBlockExplosions.SavedValue;
+			});
+			displayAntennaGlow.onValueSaved.AddListener(() =>
+			{
+				displayAntennaGlowBool = displayAntennaGlow.SavedValue;
+				config.WriteConfigJsonFile();
+			}); 
         }
 
         private static bool isCoroutineExecuting = false;
@@ -93,7 +178,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix()
                 {
-                    return OptionsWindow.doProcessFire;
+                    return doProcessFire.SavedValue;
                 }
             }
 
@@ -102,7 +187,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix()
                 {
-                    return OptionsWindow.displayBulletsCasing;
+                    return displayBulletsCasing.SavedValue;
                 }
             }
 
@@ -111,7 +196,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix()
                 {
-                    return OptionsWindow.displayMuzzleFlashes;
+                    return displayMuzzleFlashes.SavedValue;
                 }
             }
 
@@ -121,7 +206,7 @@ namespace Exund.MoreOptions
                 private static bool Prefix(ref SmokeTrail __instance)
                 {
                     var iline = (LineRenderer)line.GetValue(__instance);
-                    iline.enabled = OptionsWindow.displaySmokeTrails;
+                    iline.enabled = displaySmokeTrails.SavedValue;
                     return iline.enabled;
                 }
             }
@@ -131,7 +216,7 @@ namespace Exund.MoreOptions
             {
                 private static void Postfix(ref HoverJet __instance)
                 {
-                    EnableJetEffects.Invoke(__instance, new object[] { OptionsWindow.displayHoverEffects });
+                    EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
                 }
             }
             [HarmonyPatch(typeof(HoverJet), "OnAttach")]
@@ -139,7 +224,7 @@ namespace Exund.MoreOptions
             {
                 private static void Postfix(ref HoverJet __instance)
                 {
-                    EnableJetEffects.Invoke(__instance, new object[] { OptionsWindow.displayHoverEffects });
+                    EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
                 }
             }
 
@@ -148,7 +233,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix()
                 {
-                    return OptionsWindow.displayRemoteChargersEffects;
+                    return displayRemoteChargersEffects.SavedValue;
                 }
             }
 
@@ -161,7 +246,7 @@ namespace Exund.MoreOptions
                     var prefab = (GameObject)m_BeamQuadPrefab.GetValue(__instance);
                     if (!ItemHolderQuads.ContainsKey(__instance)) ItemHolderQuads.Add(__instance, prefab);
 
-                    if (OptionsWindow.displayHolderBeams)
+                    if (displayHolderBeams.SavedValue)
                     {
                         if (ItemHolderQuads[__instance] != prefab) m_BeamQuadPrefab.SetValue(__instance, ItemHolderQuads[__instance]);
                     }
@@ -189,7 +274,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix(ref BoosterJet __instance)
                 {
-                    if(!OptionsWindow.displayThrustersEffects)
+                    if(!displayThrustersEffects.SavedValue)
                     {
                         var trails = (JetTrail[])m_Trails.GetValue(__instance);
                         foreach (JetTrail jetTrail in trails)
@@ -198,7 +283,7 @@ namespace Exund.MoreOptions
                         }
                     }
 
-                    return OptionsWindow.displayThrustersEffects;
+                    return displayThrustersEffects.SavedValue;
                 }
             }
 
@@ -211,7 +296,7 @@ namespace Exund.MoreOptions
                     var prefab = (Transform)m_SmokeTrailPrefab.GetValue(__instance);
                     if (prefab != null && !MissileSmokePrefab.ContainsKey(__instance)) MissileSmokePrefab.Add(__instance, prefab);
 
-                    if (OptionsWindow.displayMissileSmoke)
+                    if (displayMissileSmoke.SavedValue)
                     {
                         if (MissileSmokePrefab[__instance] != prefab) m_SmokeTrailPrefab.SetValue(__instance, MissileSmokePrefab[__instance]);
                     }
@@ -240,7 +325,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix(ref Projectile __instance, ref Vector3 explodePos)
                 {
-                    if (!OptionsWindow.displayProjectileExplosions)
+                    if (!displayProjectileExplosions.SavedValue)
                     {
                         var exp = (Transform)m_Explosion.GetValue(__instance);
                         if (exp)
@@ -258,7 +343,7 @@ namespace Exund.MoreOptions
                         }
                     }
 
-                    return OptionsWindow.displayProjectileExplosions;
+                    return displayProjectileExplosions.SavedValue;
                 }
             }
 
@@ -267,7 +352,7 @@ namespace Exund.MoreOptions
             {
                 private static bool Prefix(ref ModuleDamage __instance, ref bool withDamage)
                 {
-                    if (!OptionsWindow.displayBlockExplosions)
+                    if (!displayBlockExplosions.SavedValue)
                     {
                         Transform transform = __instance.deathExplosion.Spawn(Singleton.dynamicContainer, __instance.block.centreOfMassWorld, __instance.block.trans.rotation);
                         foreach (ParticleSystem ps in transform.GetComponentsInChildren<ParticleSystem>())
@@ -283,7 +368,7 @@ namespace Exund.MoreOptions
                         }
                     }
 
-                    return OptionsWindow.displayBlockExplosions;
+                    return displayBlockExplosions.SavedValue;
                 }
             }
 
@@ -292,7 +377,7 @@ namespace Exund.MoreOptions
             {
                 private static void Prefix(ref ModuleAntenna __instance)
                 {
-                    __instance.RequestGlow = OptionsWindow.displayAntennaGlow;
+                    __instance.RequestGlow = displayAntennaGlow.SavedValue;
                 }
             }
         }
