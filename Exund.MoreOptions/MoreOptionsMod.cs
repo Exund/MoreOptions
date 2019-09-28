@@ -36,6 +36,7 @@ namespace Exund.MoreOptions
 		private static OptionToggle displayProjectileExplosions;
 		private static OptionToggle displayBlockExplosions;
 		private static OptionToggle displayAntennaGlow;
+		private static OptionToggle antigravMatSwap;
 
 		private static bool doProcessFireBool;
 		private static bool displayMuzzleFlashesBool;
@@ -49,7 +50,8 @@ namespace Exund.MoreOptions
 		private static bool displayProjectileExplosionsBool;
 		private static bool displayBlockExplosionsBool;
 		private static bool displayAntennaGlowBool;
-		
+		private static bool antigravMatSwapBool;
+
 		public static void Load()
         {
             config = new ModConfig();
@@ -72,7 +74,7 @@ namespace Exund.MoreOptions
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 
-			doProcessFire = new OptionToggle("Process Fire", "More Options", doProcessFireBool);
+			//doProcessFire = new OptionToggle("Process Fire", "More Options", doProcessFireBool);
 			displayMuzzleFlashes = new OptionToggle("Muzzle Flashes", "More Options", displayMuzzleFlashesBool);
 			displayBulletsCasing = new OptionToggle("Bullets Casing", "More Options", displayBulletsCasingBool);
 			displaySmokeTrails = new OptionToggle("Smoke Trails", "More Options", displaySmokeTrailsBool);
@@ -84,12 +86,13 @@ namespace Exund.MoreOptions
 			displayProjectileExplosions = new OptionToggle("Projectile Explosions", "More Options", displayProjectileExplosionsBool);
 			displayBlockExplosions = new OptionToggle("Block Explosions", "More Options", displayBlockExplosionsBool);
 			displayAntennaGlow = new OptionToggle("Antenna Glow", "More Options", displayAntennaGlowBool);
+			antigravMatSwap = new OptionToggle("Antigrav color pulse", "More Options", antigravMatSwapBool);
 
 
-		   	doProcessFire.onValueSaved.AddListener(() =>
+			/*doProcessFire.onValueSaved.AddListener(() =>
 			{
 				doProcessFireBool = doProcessFire.SavedValue;
-			});
+			});*/
 			displayMuzzleFlashes.onValueSaved.AddListener(() =>
 			{
 				displayMuzzleFlashesBool = displayMuzzleFlashes.SavedValue;
@@ -133,8 +136,12 @@ namespace Exund.MoreOptions
 			displayAntennaGlow.onValueSaved.AddListener(() =>
 			{
 				displayAntennaGlowBool = displayAntennaGlow.SavedValue;
+			});
+			antigravMatSwap.onValueSaved.AddListener(() =>
+			{
+				antigravMatSwapBool = antigravMatSwap.SavedValue;
 				config.WriteConfigJsonFile();
-			}); 
+			});
         }
 
         private static bool isCoroutineExecuting = false;
@@ -155,7 +162,7 @@ namespace Exund.MoreOptions
 
         internal class Patches
         {
-            [HarmonyPatch(typeof(CannonBarrel), "ProcessFire")]
+            /*[HarmonyPatch(typeof(CannonBarrel), "ProcessFire")]
             private static class ProcessFire
             {
                 private static bool Prefix(ref CannonBarrel __instance, ref bool __result)
@@ -168,7 +175,7 @@ namespace Exund.MoreOptions
                     {
                         recoiling.SetValue(i, false);
                     }));
-                    return OptionsWindow.doProcessFire;*/
+                    return OptionsWindow.doProcessFire;
                     return true;
                 }
             }
@@ -180,7 +187,7 @@ namespace Exund.MoreOptions
                 {
                     return doProcessFire.SavedValue;
                 }
-            }
+            }*/
 
             [HarmonyPatch(typeof(CannonBarrel), "EjectCasing")]
             private static class EjectCasing
@@ -211,22 +218,26 @@ namespace Exund.MoreOptions
                 }
             }
 
-            [HarmonyPatch(typeof(HoverJet), "Update")]
-            private static class HoverJet1
-            {
-                private static void Postfix(ref HoverJet __instance)
-                {
-                    EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
-                }
-            }
-            [HarmonyPatch(typeof(HoverJet), "OnAttach")]
-            private static class HoverJet2
-            {
-                private static void Postfix(ref HoverJet __instance)
-                {
-                    EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
-                }
-            }
+			private static class HoverJetFix
+			{
+				[HarmonyPatch(typeof(HoverJet), "Update")]
+				private static class Update
+				{
+					private static void Postfix(ref HoverJet __instance)
+					{
+						EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
+					}
+				}
+
+				[HarmonyPatch(typeof(HoverJet), "OnAttach")]
+				private static class OnAttach
+				{
+					private static void Postfix(ref HoverJet __instance)
+					{
+						EnableJetEffects.Invoke(__instance, new object[] { displayHoverEffects.SavedValue });
+					}
+				}
+			} 
 
             [HarmonyPatch(typeof(ModuleRemoteCharger), "FireNewArcEffect")]
             private static class ModuleRemoteChargerFix
@@ -237,37 +248,41 @@ namespace Exund.MoreOptions
                 }
             }
 
-            private static Dictionary<ModuleItemHolderBeam, GameObject> ItemHolderQuads = new Dictionary<ModuleItemHolderBeam, GameObject>();
-            [HarmonyPatch(typeof(ModuleItemHolderBeam), "UpdateBeamEffects")]
-            private static class ModuleItemHolderBeamFix
-            {
-                private static void Prefix(ref ModuleItemHolderBeam __instance)
-                {
-                    var prefab = (GameObject)m_BeamQuadPrefab.GetValue(__instance);
-                    if (!ItemHolderQuads.ContainsKey(__instance)) ItemHolderQuads.Add(__instance, prefab);
+			private static class ModuleItemHolderBeamFix
+			{
+				private static Dictionary<ModuleItemHolderBeam, GameObject> ItemHolderQuads = new Dictionary<ModuleItemHolderBeam, GameObject>();
+				[HarmonyPatch(typeof(ModuleItemHolderBeam), "UpdateBeamEffects")]
+				private static class UpdateBeamEffects
+				{
+					private static void Prefix(ref ModuleItemHolderBeam __instance)
+					{
+						var prefab = (GameObject)m_BeamQuadPrefab.GetValue(__instance);
+						if (!ItemHolderQuads.ContainsKey(__instance)) ItemHolderQuads.Add(__instance, prefab);
 
-                    if (displayHolderBeams.SavedValue)
-                    {
-                        if (ItemHolderQuads[__instance] != prefab) m_BeamQuadPrefab.SetValue(__instance, ItemHolderQuads[__instance]);
-                    }
-                    else if (prefab != null)
-                    {
-                        m_BeamQuadPrefab.SetValue(__instance, null);
-                    }
-                }
-            }
-            [HarmonyPatch(typeof(ModuleItemHolderBeam), "OnRecycle")]
-            private static class ModuleItemHolderBeamFix2
-            {
-                private static void Prefix(ref ModuleItemHolderBeam __instance)
-                {
-                    if (ItemHolderQuads.ContainsKey(__instance))
-                    {
-                        m_BeamQuadPrefab.SetValue(__instance, ItemHolderQuads[__instance]);
-                        ItemHolderQuads.Remove(__instance);
-                    }
-                }
-            }
+						if (displayHolderBeams.SavedValue)
+						{
+							if (ItemHolderQuads[__instance] != prefab) m_BeamQuadPrefab.SetValue(__instance, ItemHolderQuads[__instance]);
+						}
+						else if (prefab != null)
+						{
+							m_BeamQuadPrefab.SetValue(__instance, null);
+						}
+					}
+				}
+
+				[HarmonyPatch(typeof(ModuleItemHolderBeam), "OnRecycle")]
+				private static class OnRecycle
+				{
+					private static void Prefix(ref ModuleItemHolderBeam __instance)
+					{
+						if (ItemHolderQuads.ContainsKey(__instance))
+						{
+							m_BeamQuadPrefab.SetValue(__instance, ItemHolderQuads[__instance]);
+							ItemHolderQuads.Remove(__instance);
+						}
+					}
+				}
+			}
 
             [HarmonyPatch(typeof(BoosterJet), "Update")]
             private static class BoosterJetFix
@@ -287,38 +302,41 @@ namespace Exund.MoreOptions
                 }
             }
 
-            private static Dictionary<MissileProjectile, Transform> MissileSmokePrefab = new Dictionary<MissileProjectile, Transform>();
-            [HarmonyPatch(typeof(MissileProjectile), "ActivateBoosters")]
-            private static class MissileProjectileActivateBoostersFix
-            {
-                private static void Prefix(ref MissileProjectile __instance)
-                {
-                    var prefab = (Transform)m_SmokeTrailPrefab.GetValue(__instance);
-                    if (prefab != null && !MissileSmokePrefab.ContainsKey(__instance)) MissileSmokePrefab.Add(__instance, prefab);
+			private static class MissileProjectileFix
+			{
+				private static Dictionary<MissileProjectile, Transform> MissileSmokePrefab = new Dictionary<MissileProjectile, Transform>();
+				[HarmonyPatch(typeof(MissileProjectile), "ActivateBoosters")]
+				private static class ActivateBoosters
+				{
+					private static void Prefix(ref MissileProjectile __instance)
+					{
+						var prefab = (Transform)m_SmokeTrailPrefab.GetValue(__instance);
+						if (prefab != null && !MissileSmokePrefab.ContainsKey(__instance)) MissileSmokePrefab.Add(__instance, prefab);
 
-                    if (displayMissileSmoke.SavedValue)
-                    {
-                        if (MissileSmokePrefab[__instance] != prefab) m_SmokeTrailPrefab.SetValue(__instance, MissileSmokePrefab[__instance]);
-                    }
-                    else if (prefab != null)
-                    {
-                        m_SmokeTrailPrefab.SetValue(__instance, null);
-                    }
-                }
-            }
+						if (displayMissileSmoke.SavedValue)
+						{
+							if (MissileSmokePrefab[__instance] != prefab) m_SmokeTrailPrefab.SetValue(__instance, MissileSmokePrefab[__instance]);
+						}
+						else if (prefab != null)
+						{
+							m_SmokeTrailPrefab.SetValue(__instance, null);
+						}
+					}
+				}
 
-            [HarmonyPatch(typeof(MissileProjectile), "OnRecycle")]
-            private static class MissileProjectileRecycleFix
-            {
-                private static void Prefix(ref MissileProjectile __instance)
-                {
-                    if (MissileSmokePrefab.ContainsKey(__instance))
-                    {
-                        m_SmokeTrailPrefab.SetValue(__instance, MissileSmokePrefab[__instance]);
-                        MissileSmokePrefab.Remove(__instance);
-                    }
-                }
-            }
+				[HarmonyPatch(typeof(MissileProjectile), "OnRecycle")]
+				private static class Recycle
+				{
+					private static void Prefix(ref MissileProjectile __instance)
+					{
+						if (MissileSmokePrefab.ContainsKey(__instance))
+						{
+							m_SmokeTrailPrefab.SetValue(__instance, MissileSmokePrefab[__instance]);
+							MissileSmokePrefab.Remove(__instance);
+						}
+					}
+				}
+			}
 
             [HarmonyPatch(typeof(Projectile), "SpawnExplosion")]
             private static class ProjectileExplosionsFix
@@ -380,6 +398,22 @@ namespace Exund.MoreOptions
                     __instance.RequestGlow = displayAntennaGlow.SavedValue;
                 }
             }
+
+			[HarmonyPatch(typeof(Tank), "UpdateAntiGravMaterialOnBlocks")]
+			private static class TankFix
+			{
+				private static bool Prefix(ref Tank __instance)
+				{
+					if(!antigravMatSwap.SavedValue)
+					{
+						foreach (TankBlock tankBlock in __instance.blockman.IterateBlocks())
+						{
+							tankBlock.SwapMaterialAntiGrav(false);
+						}
+					}
+					return antigravMatSwap.SavedValue;
+				}
+			}
         }
     }
 }
