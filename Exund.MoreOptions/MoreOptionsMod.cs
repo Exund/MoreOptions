@@ -399,17 +399,15 @@ namespace Exund.MoreOptions
                 }
             }
 
-			[HarmonyPatch(typeof(Tank), "UpdateAntiGravMaterialOnBlocks")]
-			private static class TankFix
+			[HarmonyPatch(typeof(TankBlock), "SwapMaterialAntiGrav")]
+			private static class TankBlockFix
 			{
-				private static bool Prefix(ref Tank __instance)
+				static FieldInfo m_MaterialSwapper = typeof(TankBlock).GetField("m_MaterialSwapper", BindingFlags.NonPublic | BindingFlags.Instance);
+				private static bool Prefix(ref TankBlock __instance)
 				{
 					if(!antigravMatSwap.SavedValue)
 					{
-						foreach (TankBlock tankBlock in __instance.blockman.IterateBlocks())
-						{
-							tankBlock.SwapMaterialAntiGrav(false);
-						}
+						((MaterialSwapper)m_MaterialSwapper.GetValue(__instance)).SwapMaterialAntiGrav(false);
 					}
 					return antigravMatSwap.SavedValue;
 				}
