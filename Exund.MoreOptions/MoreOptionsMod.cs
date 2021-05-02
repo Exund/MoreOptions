@@ -12,17 +12,19 @@ namespace Exund.MoreOptions
 {
     public class MoreOptionsMod
     {
-        public static MethodInfo EnableJetEffects;
-        public static FieldInfo line;
-        public static FieldInfo recoiling;
-        public static FieldInfo recoilAnim;
-        public static FieldInfo animState;
-        public static FieldInfo m_BeamQuadPrefab;
-        public static FieldInfo m_Trails;
-        public static FieldInfo m_SmokeTrailPrefab;
-        public static FieldInfo m_Explosion;
+		static readonly BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;  
+        public static MethodInfo EnableJetEffects = typeof(HoverJet).GetMethod("EnableJetEffects", flags);
+        public static FieldInfo line = typeof(SmokeTrail).GetField("line", flags);
+		static readonly Type T_CannonBarrel = typeof(CannonBarrel);
+		public static FieldInfo recoiling = T_CannonBarrel.GetField("recoiling", flags);
+		public static FieldInfo recoilAnim = T_CannonBarrel.GetField("recoilAnim", flags);
+		public static FieldInfo animState = T_CannonBarrel.GetField("animState", flags);
+		public static FieldInfo m_BeamQuadPrefab = typeof(ModuleItemHolderBeam).GetField("m_BeamQuadPrefab", flags);
+		public static FieldInfo m_Trails = typeof(BoosterJet).GetField("m_Trails", flags);
+		public static FieldInfo m_SmokeTrailPrefab = typeof(MissileProjectile).GetField("m_SmokeTrailPrefab", flags);
+		public static FieldInfo m_Explosion = typeof(Projectile).GetField("m_Explosion", flags);
 
-        public static ModConfig config;
+		public static ModConfig config;
 
 		private static OptionToggle doProcessFire;
 		private static OptionToggle displayMuzzleFlashes;
@@ -60,19 +62,8 @@ namespace Exund.MoreOptions
 				config.BindConfig(null, f);
             }
 
-			EnableJetEffects = typeof(HoverJet).GetMethod("EnableJetEffects", BindingFlags.Instance | BindingFlags.NonPublic);
-            line = typeof(SmokeTrail).GetField("line", BindingFlags.Instance | BindingFlags.NonPublic);
-            recoiling = typeof(CannonBarrel).GetField("recoiling", BindingFlags.Instance | BindingFlags.NonPublic);
-            recoilAnim = typeof(CannonBarrel).GetField("recoilAnim", BindingFlags.Instance | BindingFlags.NonPublic);
-            animState = typeof(CannonBarrel).GetField("animState", BindingFlags.Instance | BindingFlags.NonPublic);
-            m_BeamQuadPrefab = typeof(ModuleItemHolderBeam).GetField("m_BeamQuadPrefab", BindingFlags.Instance | BindingFlags.NonPublic);
-            m_Trails = typeof(BoosterJet).GetField("m_Trails", BindingFlags.Instance | BindingFlags.NonPublic);
-            m_SmokeTrailPrefab = typeof(MissileProjectile).GetField("m_SmokeTrailPrefab", BindingFlags.Instance | BindingFlags.NonPublic);
-            m_Explosion = typeof(Projectile).GetField("m_Explosion", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            var harmony = HarmonyInstance.Create("exund.prodcedural.blocks");
+            var harmony = HarmonyInstance.Create("exund.moreoptions");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-
 
 			//doProcessFire = new OptionToggle("Process Fire", "More Options", doProcessFireBool);
 			displayMuzzleFlashes = new OptionToggle("Muzzle Flashes", "More Options", displayMuzzleFlashesBool);
@@ -140,13 +131,17 @@ namespace Exund.MoreOptions
 			antigravMatSwap.onValueSaved.AddListener(() =>
 			{
 				antigravMatSwapBool = antigravMatSwap.SavedValue;
+			});
+
+			NativeOptionsMod.onOptionsSaved.AddListener(() =>
+			{
 				config.WriteConfigJsonFile();
 			});
         }
 
         private static bool isCoroutineExecuting = false;
 
-        static IEnumerator<WaitForSeconds> ExecuteAfterTime(float time, Action task)
+        /*static IEnumerator<WaitForSeconds> ExecuteAfterTime(float time, Action task)
         {
             if (isCoroutineExecuting)
                 yield break;
@@ -158,7 +153,7 @@ namespace Exund.MoreOptions
             
 
             isCoroutineExecuting = false;
-        }
+        }*/
 
         internal class Patches
         {
