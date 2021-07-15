@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using Harmony;
+using HarmonyLib;
 using UnityEngine;
 using ModHelper.Config;
 using Nuterra.NativeOptions;
@@ -49,7 +49,7 @@ namespace Exund.MoreOptions
 				config.BindConfig(null, f);
             }
 
-            var harmony = HarmonyInstance.Create("exund.moreoptions");
+            var harmony = new Harmony("exund.moreoptions");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 			var modName = "More Options";
