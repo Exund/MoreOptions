@@ -65,7 +65,7 @@ namespace Exund.MoreOptions
                 config.BindConfig(null, f);
             }
 
-            const string modName = "More Options";
+            const string modName = "VFX Options";
 
             var displayMuzzleFlashes = new OptionToggle("Muzzle Flashes", modName, displayMuzzleFlashesBool);
             var displayBulletsCasing = new OptionToggle("Bullets Casing", modName, displayBulletsCasingBool);
