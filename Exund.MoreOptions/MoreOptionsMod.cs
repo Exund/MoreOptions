@@ -273,12 +273,15 @@ namespace Exund.MoreOptions
                 }
             }
 
-            [HarmonyPatch(typeof(ModuleAntenna), "OnUpdate")]
+            [HarmonyPatch(typeof(ModuleAntenna), "get_RequestGlow")]
             private static class ModuleAntennaFix
             {
-                private static void Prefix(ref ModuleAntenna __instance)
+                private static void Postfix(ref ModuleAntenna __instance, ref bool __result)
                 {
-                    __instance.RequestGlow = displayAntennaGlowBool;
+                    if (!displayAntennaGlowBool)
+                    {
+                        __result = false;
+                    }
                 }
             }
 
@@ -296,7 +299,7 @@ namespace Exund.MoreOptions
                 }
             }
 
-            [HarmonyPatch(typeof(BubbleShield), "Update")]
+            [HarmonyPatch(typeof(BubbleShield), "OnUpdate")]
             private static class BubbleShieldFix
             {
                 private static void Prefix(ref BubbleShield __instance)
